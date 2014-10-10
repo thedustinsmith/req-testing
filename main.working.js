@@ -1,37 +1,4 @@
-// Full version of `log` that:
-//  * Prevents errors on console methods when no console present.
-//  * Exposes a global 'log' function that preserves line numbering and formatting.
-(function () {
-  var method;
-  var noop = function () { };
-  var methods = [
-      'assert', 'clear', 'count', 'debug', 'dir', 'dirxml', 'error',
-      'exception', 'group', 'groupCollapsed', 'groupEnd', 'info', 'log',
-      'markTimeline', 'profile', 'profileEnd', 'table', 'time', 'timeEnd',
-      'timeStamp', 'trace', 'warn'
-  ];
-  var length = methods.length;
-  var console = (window.console = window.console || {});
- 
-  while (length--) {
-    method = methods[length];
- 
-    // Only stub undefined methods.
-    if (!console[method]) {
-        console[method] = noop;
-    }
-  }
- 
- 
-  if (Function.prototype.bind) {
-    window.log = Function.prototype.bind.call(console.log, console);
-  }
-  else {
-    window.log = function() { 
-      Function.prototype.apply.call(console.log, console, arguments);
-    };
-  }
-})();;(function(global) {
+(function(global) {
 	var POSSIBLE_VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 	var Board = global.Board = function Board (table) {
@@ -39,10 +6,9 @@
 	}
 
 	Board.prototype.initialize = function(table) {
-		var board = this;
 		this.$table = $table = $(table);
 		this.cells = $table.find("td").map(function(ix, td) {
-			return new Cell(td, board);
+			return new Cell(td);
 		}).toArray();
 		this.tries = 0;
 	};
@@ -96,14 +62,20 @@
 
 		var unsolved1 = [];
 		unsolvedCells.forEach(function (c, ix) {
+			var related = c.getRelated(solvedCells);
+			var permValues = related.map(function(c) {
+				return c.getVal();
+			});
+			permValues = arr_unique(permValues);
+			var possible = arr_diff(POSSIBLE_VALUES, permValues);
 
-			var possible = c.getPossible();
+			if(c.id === 25) log("basic", possible);
+			c.possible = possible;
 			if (possible.length === 1) {
 				c.setGuess(possible[0]);
 				c.$td.removeAttr("possible");
 				solvedCells.push(c);
 				c.$td.css('background', '#bada55');
-				c.$td.attr("try", board.tries);
 			}
 			else {
 				unsolved1.push(c);
@@ -112,21 +84,20 @@
 		});
 
 		var unsolved2 = []
-		unsolved1.forEach(function (c, ix) {
-			var myVals = c.getPossible();
+		unsolvedCells.forEach(function (c, ix) {
+			var myVals = c.possible;
 			var rowCells = board.getRowCells(c.row).filter(function (rc) { return rc.id !== c.id; });
 			rowCells.forEach(function (rc) { 
-				if (rc.getVal()) return;
-				var rcPoss = rc.getPossible();
-				if (rcPoss.length > 0) {
-					myVals = arr_diff(myVals, rcPoss);
+				if (rc.possible && rc.possible.length > 0) {
+					myVals = arr_diff(myVals, rc.possible);
 				}
 			});
 
 			if (myVals.length === 1) {
 				c.$td.css('background', 'yellow');
-				c.$td.attr("try", board.tries);
+				c.$td.attr("try", self.tries);
 				c.setGuess(myVals[0]);
+				c.possible = [];
 				c.$td.removeAttr("possible");
 				solvedCells.push(c);
 			}
@@ -137,19 +108,17 @@
 
 		var unsolved3 = []
 		unsolved2.forEach(function (c, ix) {
-			var myVals = c.getPossible();
+			var myVals = c.possible;
 			var rowCells = board.getColCells(c.col).filter(function (rc) { return rc.id !== c.id; });
 			rowCells.forEach(function (rc) { 
-				if (rc.getVal()) return;
-				var rcPoss = rc.getPossible();
-				if (rcPoss.length > 0) {
-					myVals = arr_diff(myVals, rcPoss);
+				if (rc.possible && rc.possible.length > 0) {
+					myVals = arr_diff(myVals, rc.possible);
 				}
 			});
 
 			if (myVals.length === 1) {
 				c.$td.css('background', '#ffba00');
-				c.$td.attr("try", board.tries);
+				c.$td.attr("try", self.tries);
 				c.setGuess(myVals[0]);
 				c.possible = [];
 				c.$td.removeAttr("possible");
@@ -159,6 +128,8 @@
 				unsolved3.push(c);
 			}
 		});
+
+
 
 		this.tries ++;
 		if (this.tries <= 10) {
@@ -174,13 +145,12 @@
 		return this.cells.filter(function (c) { return c.col === col; });
 	};
 
-	var Cell = global.Cell = function Cell (td, board) {
-		this.initialize(td, board);
+	var Cell = global.Cell = function Cell (td) {
+		this.initialize(td);
 	};
 
-	Cell.prototype.initialize = function (td, board) {
+	Cell.prototype.initialize = function (td) {
 		this.$td = $td = $(td);
-		this.board = board;
 
 		var cellIx = $td.index();
 		var rowIx = $td.closest("tr").index();
@@ -215,12 +185,10 @@
 		this.isPermanent = p;
 	};
 
-	Cell.prototype.getRelated = function () {
+	Cell.prototype.getRelated = function (cells) {
 		var ret = [];
 		var self = this;
-		this.board.cells.forEach(function (c) {
-			if (c.id === self.id) return;
-
+		cells.forEach(function (c) {
 			if(c.row === self.row || c.col === self.col || c.block === self.block) {
 				ret.push(c);
 			}
@@ -236,15 +204,6 @@
 		this.possible = false;
 	};
 
-	Cell.prototype.getPossible = function () {
-		var related = this.getRelated().filter(function (c) { return c.isPermanent || c.isGuess; });
-		var permValues = related.map(function (c) {
-			return c.getVal();
-		});
-		permValues = arr_unique(permValues);
-		var possible = arr_diff(POSSIBLE_VALUES, permValues);
-		return possible;
-	};
 
 
 /* Utilities */

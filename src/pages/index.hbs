@@ -3,14 +3,143 @@ title: 'Home Page'
 ---
 {{#extend "page"}}
 {{#content "content"}}
-<h2>Welcome to my static site</h2>
 
-<blockquote>-Dustin Smith</blockquote>
+<div class="grid">
+	<div class="col-9-12">
+		<table id="sudoku-table">
+			<tbody><tr>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable="">1</td>
+					<td contenteditable="">7</td>
+					<td contenteditable="">5</td>
+					<td contenteditable=""></td>
+					<td contenteditable="">6</td>
+					<td contenteditable=""></td>
+				</tr>
+				<tr>
+					<td contenteditable=""></td>
+					<td contenteditable="">9</td>
+					<td contenteditable=""><br></td>
+					<td contenteditable=""></td>
+					<td contenteditable="">3</td>
+					<td contenteditable=""></td>
+					<td contenteditable="">4</td>
+					<td contenteditable="">1</td>
+					<td contenteditable=""></td>
+				</tr>
+				<tr>
+					<td contenteditable="">6</td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable="">4</td>
+					<td contenteditable="">8</td>
+					<td contenteditable=""></td>
+					<td contenteditable="">2</td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+				</tr>
+				<tr>
+					<td contenteditable="">9</td>
+					<td contenteditable=""></td>
+					<td contenteditable="">6</td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable="">7</td>
+					<td contenteditable=""></td>
+					<td contenteditable="">2</td>
+					<td contenteditable=""></td>
+				</tr>
+				<tr>
+					<td contenteditable="">3</td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable="">6</td>
+				</tr>
+				<tr>
+					<td contenteditable=""></td>
+					<td contenteditable="">7</td>
+					<td contenteditable=""></td>
+					<td contenteditable="">5</td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable="">3</td>
+					<td contenteditable=""></td>
+					<td contenteditable="">9</td>
+				</tr>
+				<tr>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable="">1</td>
+					<td contenteditable=""></td>
+					<td contenteditable="">5</td>
+					<td contenteditable="">3</td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable="">4</td>
+				</tr>
+				<tr>
+					<td contenteditable=""></td>
+					<td contenteditable="">8</td>
+					<td contenteditable="">3</td>
+					<td contenteditable=""></td>
+					<td contenteditable="">6</td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable="">9</td>
+					<td contenteditable=""></td>
+				</tr>
+				<tr>
+					<td contenteditable=""></td>
+					<td contenteditable="">4</td>
+					<td contenteditable=""></td>
+					<td contenteditable="">7</td>
+					<td contenteditable="">1</td>
+					<td contenteditable="">8</td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+					<td contenteditable=""></td>
+				</tr></tbody>
+			</table>
+	</div>
+	<div class="col-3-12">
+		<button data-puzzlejson='{"3":1,"4":7,"5":5,"7":6,"10":9,"13":3,"15":4,"16":1,"18":6,"21":4,"22":8,"24":2,"27":9,"29":6,"32":7,"34":2,"36":3,"44":6,"46":7,"48":5,"51":3,"53":9,"56":1,"58":5,"59":3,"62":4,"64":8,"65":3,"67":6,"70":9,"73":4,"75":7,"76":1,"77":8}'>Easy</button><br />
+		<button data-puzzlejson='{"0":6,"10":1,"12":6,"14":5,"16":7,"19":2,"20":8,"21":1,"22":9,"23":3,"28":8,"32":9,"33":7,"36":4,"37":3,"40":8,"43":9,"44":5,"47":1,"48":5,"52":2,"57":8,"58":3,"59":7,"60":5,"61":6,"64":6,"66":9,"68":2,"70":4,"80":7}'>Medium</button>
+		<br />
+		<button data-puzzlejson='{"0":7,"3":8,"5":9,"6":3,"8":5,"10":8,"12":2,"13":6,"16":7,"19":2,"28":1,"35":3,"38":3,"39":6,"41":5,"42":7,"45":2,"52":5,"61":3,"64":3,"67":4,"68":8,"70":1,"72":1,"74":9,"75":5,"77":2,"80":7}'>Hard</button>
+
+		<br />
+		<button data-puzzlejson='{"0":3,"4":4,"6":2,"7":6,"12":6,"15":9,"23":8,"24":5,"31":9,"34":2,"36":6,"37":4,"43":8,"44":3,"46":5,"49":7,"56":3,"57":9,"65":7,"68":5,"73":6,"74":2,"76":3,"80":1}'>"Evil"</button>
+
+
+		<br /><button id="solve">Solve</button>
+
+	</div>
+</div>
+
+
 {{/content}}
 
 {{#content "scripts"}}
 <script>
-$("blockquote").css("color", "#bada55");
+	var board = new Board($("#sudoku-table"));
+
+	$("[data-puzzlejson]").on('click', function(ev) {
+		var btn = $(this);
+		var json = btn.data("puzzlejson");
+		board.reset();
+		board.load(json);
+
+	});
+
+	$("#solve").on('click', function() { board.solve(); })
+	//board.solve();
 </script>
 {{/content}}
 {{/extend}}

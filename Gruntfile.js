@@ -56,7 +56,7 @@ module.exports = function (grunt) {
 					cleancss: true
 				},
 				files: {
-					'dist/css/all.min.css': ['src/assets/css/**/*.css']
+					'dist/css/all.min.css': ['src/assets/css/**/*.css', 'src/assets/css/**/*.less']
 				}
 			}
 		},
@@ -72,7 +72,7 @@ module.exports = function (grunt) {
 		watch: {
 			assets: {
 				files: ['src/assets/**/*'],
-				tasks: ['concat', 'uglify', 'less']
+				tasks: ['concat', 'less']
 			},
 			src: {
 				files: ['src/layouts/**/*', 'src/pages/**/*'],
@@ -92,5 +92,6 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-newer');
 
 	/* grunt tasks */
+	grunt.registerTask('development', ['clean', 'copy', 'concat', 'less', 'assemble', 'concat', 'connect', 'watch']);
 	grunt.registerTask('default', ['clean', 'copy', 'concat', 'uglify', 'less', 'assemble', 'connect', 'watch']);
 };
