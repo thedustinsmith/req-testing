@@ -43,6 +43,147 @@
 		return json;
 	};
 
+	Board.prototype._solveVeryBasic = function (unsolvedCells) {
+		var unsuccessful = [];
+		unsolvedCells.forEach(function (c, ix) {
+			var possible = c.getPossible();
+			if (possible.length === 1) {
+				c.setGuess(possible[0]);
+				c.$td.removeAttr("possible");
+				c.$td.css('background', '#bada55');
+				c.$td.attr("try", board.tries);
+			}
+			else {
+				unsuccessful.push(c);
+				c.$td.attr("possible", possible.join(","));
+			}
+		});
+		return unsuccessful;
+	};
+
+	Board.prototype._solveRowSimple = function (unsolvedCells) {
+		var unsuccessful = [];
+		unsolvedCells.forEach(function (c, ix) {
+			var myVals = c.getPossible();
+			var rowCells = board.getRowCells(c.row).filter(function (rc) { return rc.id !== c.id; });
+			rowCells.forEach(function (rc) { 
+				if (rc.getVal()) return;
+				var rcPoss = rc.getPossible();
+				if (rcPoss.length > 0) {
+					myVals = arr_diff(myVals, rcPoss);
+				}
+			});
+
+			if (myVals.length === 1) {
+				c.$td.css('background', 'yellow');
+				c.$td.attr("try", board.tries);
+				c.setGuess(myVals[0]);
+				c.$td.removeAttr("possible");
+			}
+			else {
+				unsuccessful.push(c);
+			}
+		});
+		return unsuccessful;
+	};
+
+	Board.prototype._solveColSimple = function (unsolvedCells) {
+		var unsuccessful = [];
+		unsolvedCells.forEach(function (c, ix) {
+			var myVals = c.getPossible();
+			var colCells = board.getColCells(c.col).filter(function (rc) { return rc.id !== c.id; });
+			colCells.forEach(function (rc) { 
+				if (rc.getVal()) return;
+				var rcPoss = rc.getPossible();
+				if (rcPoss.length > 0) {
+					myVals = arr_diff(myVals, rcPoss);
+				}
+			});
+
+			if (myVals.length === 1) {
+				c.$td.css('background', '#ffba00');
+				c.$td.attr("try", board.tries);
+				c.setGuess(myVals[0]);
+				c.possible = [];
+				c.$td.removeAttr("possible");
+			}
+			else {
+				unsuccessful.push(c);
+			}
+		});
+		return unsuccessful;
+	};
+
+	Board.prototype._solveBlockSimple = function (unsolvedCells) {
+		var unsuccessful = [];
+		unsolvedCells.forEach(function (c, ix) {
+			var myVals = c.getPossible();
+			var blockCells = board.getBlockCells(c.block).filter(function (rc) { return rc.id !== c.id; });
+			blockCells.forEach(function (rc) { 
+				if (rc.getVal()) return;
+				var rcPoss = rc.getPossible();
+				if (rcPoss.length > 0) {
+					myVals = arr_diff(myVals, rcPoss);
+				}
+			});
+
+			if (myVals.length === 1) {
+				c.$td.css('background', 'fuchsia');
+				c.$td.attr("try", board.tries);
+				c.setGuess(myVals[0]);
+				c.possible = [];
+				c.$td.removeAttr("possible");
+			}
+			else {
+				unsuccessful.push(c);
+			}
+		});
+		return unsuccessful;
+	};
+
+	Board.prototype._doSomeElimination = function (unsolvedCells) {
+		var board = this;
+		var noSuccess = [];
+		unsolvedCells.forEach(function (c) {
+			var success = false;
+			var myValues = c.getPossible();
+			var blockCells = board.getBlockCells(c.block);
+			var colCells = board.getColCells(c.col);
+			myValues.forEach(function (v) {
+				var valBlocks = blockCells.filter(function (b) { return b.getPossible().indexOf(v) > -1; });
+				var doElim = !valBlocks.some(function (v) { return v.col != c.col; });
+
+				var dolog = (c.id == 31 && v == 9);
+				if (dolog) {
+					log(doElim);
+				}
+
+				if (doElim) {
+					colCells.forEach(function (colc) {
+						var colPoss = colc.getPossible();
+						var ix = colPoss.indexOf(v);
+						if (dolog) {
+							log(colc.col);
+						}
+						if (ix > -1) {
+							colPoss.splice(ix, 1);
+							if (colPoss.length === 1) {
+								colc.setGuess(colPoss[0]);
+								colc.$td.css('background', 'limegreen');
+								success = true;
+							}
+						}
+					});
+				}
+			});
+
+			if (!success) {
+				noSuccess.push(c);
+			}
+		});
+		return noSuccess;
+	};
+
 	Board.prototype.solve = function () {
 
 		var board = this;
@@ -61,76 +202,30 @@
 			}
 		});
 
-		var unsolved1 = [];
-		unsolvedCells.forEach(function (c, ix) {
+		unsolvedCells = board._solveVeryBasic(unsolvedCells);
 
-			var possible = c.getPossible();
-			if (possible.length === 1) {
-				c.setGuess(possible[0]);
-				c.$td.removeAttr("possible");
-				solvedCells.push(c);
-				c.$td.css('background', '#bada55');
-				c.$td.attr("try", board.tries);
-			}
-			else {
-				unsolved1.push(c);
-				c.$td.attr("possible", possible.join(","));
-			}
-		});
+		unsolvedCells = board._solveRowSimple(unsolvedCells);
 
-		var unsolved2 = []
-		unsolved1.forEach(function (c, ix) {
-			var myVals = c.getPossible();
-			var rowCells = board.getRowCells(c.row).filter(function (rc) { return rc.id !== c.id; });
-			rowCells.forEach(function (rc) { 
-				if (rc.getVal()) return;
-				var rcPoss = rc.getPossible();
-				if (rcPoss.length > 0) {
-					myVals = arr_diff(myVals, rcPoss);
-				}
-			});
+		unsolvedCells = board._solveColSimple(unsolvedCells);
 
-			if (myVals.length === 1) {
-				c.$td.css('background', 'yellow');
-				c.$td.attr("try", board.tries);
-				c.setGuess(myVals[0]);
-				c.$td.removeAttr("possible");
-				solvedCells.push(c);
-			}
-			else {
-				unsolved2.push(c);
-			}
-		});
+		unsolvedCells = board._solveBlockSimple(unsolvedCells);
 
-		var unsolved3 = []
-		unsolved2.forEach(function (c, ix) {
-			var myVals = c.getPossible();
-			var rowCells = board.getColCells(c.col).filter(function (rc) { return rc.id !== c.id; });
-			rowCells.forEach(function (rc) { 
-				if (rc.getVal()) return;
-				var rcPoss = rc.getPossible();
-				if (rcPoss.length > 0) {
-					myVals = arr_diff(myVals, rcPoss);
-				}
-			});
-
-			if (myVals.length === 1) {
-				c.$td.css('background', '#ffba00');
-				c.$td.attr("try", board.tries);
-				c.setGuess(myVals[0]);
-				c.possible = [];
-				c.$td.removeAttr("possible");
-				solvedCells.push(c);
-			}
-			else {
-				unsolved3.push(c);
-			}
-		});
-
-		this.tries ++;
-		if (this.tries <= 10) {
+		// todo not working
+		//unsolvedCells = board._doSomeElimination(unsolvedCells);
+		
+		this.tries++;
+		if (this.tries <= 15 && unsolvedCells.length > 0) {
 			this.solve();
 		}
+		else {
+			log("done in "+ this.tries + " tries");
+		}
+	};
+
+	Board.prototype.isValid = function () {
+		return !this.cells.some(function (c) {
+			return !c.isValid();
+		});
 	};
 
 	Board.prototype.getRowCells = function (row) {
@@ -141,6 +236,10 @@
 		return this.cells.filter(function (c) { return c.col === col; });
 	};
 
+	Board.prototype.getBlockCells = function (block) {
+		return this.cells.filter(function (c) { return c.block === block; });
+	};
+
 	var Cell = global.Cell = function Cell (td, board) {
 		this.initialize(td, board);
 	};
@@ -148,6 +247,8 @@
 	Cell.prototype.initialize = function (td, board) {
 		this.$td = $td = $(td);
 		this.board = board;
+
+		$td.data('cell', this);
 
 		var cellIx = $td.index();
 		var rowIx = $td.closest("tr").index();
@@ -211,6 +312,17 @@
 		permValues = arr_unique(permValues);
 		var possible = arr_diff(POSSIBLE_VALUES, permValues);
 		return possible;
+	};
+
+	Cell.prototype.isValid = function () {
+		var v = this.getVal();
+		var poss = this.getPossible();
+
+		if (!v && poss.length > 0) {
+			return true;
+		}
+
+		return poss.length > 0 && poss.indexOf(v) > -1;
 	};
 
 
