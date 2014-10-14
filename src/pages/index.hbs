@@ -120,6 +120,7 @@ title: 'Home Page'
 		<br />
 		<button data-puzzlejson='{"0":3,"4":4,"6":2,"7":6,"12":6,"15":9,"23":8,"24":5,"31":9,"34":2,"36":6,"37":4,"43":8,"44":3,"46":5,"49":7,"56":3,"57":9,"65":7,"68":5,"73":6,"74":2,"76":3,"80":1}'>"Evil"</button>
 
+		<br /><button data-puzzlejson='{"1":2,"6":3,"7":6,"8":1,"9":6,"17":7,"19":9,"22":7,"32":5,"33":4,"37":8,"39":4,"40":3,"41":9,"43":7,"47":6,"48":1,"58":1,"61":8,"63":7,"71":2,"72":4,"73":3,"74":1,"79":5}'>Evil 2</button>
 
 		<br /><button id="solve">Solve</button>
 
@@ -143,7 +144,9 @@ title: 'Home Page'
 
 	});
 
-	$("#solve").on('click', function() { board.solve(); })
+	$("#solve").on('click', function() { 
+		window.requestAnimationFrame(board.solve.bind(board)); //(); 
+	})
 	$("#check").on('click', function() {
 		var valid = board.isValid();
 		log(valid ? "Way to go" : "Sorry ... not valid");
